@@ -11,6 +11,7 @@ struct AddItemView: View {
     @State private var amountText: String = ""
     @State private var selectedUnit: String = "g"
     @State private var selectedExpiryDays: Int = 5
+    @State private var isCustomExpiry: Bool = false
     @State private var expiryDate: Date = Calendar.current.date(byAdding: .day, value: 5, to: .now) ?? .now
     @State private var selectedPhotoItem: PhotosPickerItem? 
     @State private var selectedImageData: Data?
@@ -18,7 +19,7 @@ struct AddItemView: View {
     @State private var showsSuccessFeedback = false
 
     private let unitOptions = ["g", "kg", "ml", "L", "pcs", "pack"]
-    private let expiryOptions = [3, 5, 7]
+    private let expiryOptions = [3, 5, 7, 0]
 
     private var canSave: Bool {
         Double(valueText.replacingOccurrences(of: ",", with: ".")) != nil &&
@@ -115,6 +116,19 @@ struct AddItemView: View {
             VStack(alignment: .leading, spacing: 14) {
                 fieldLabel("EXPIRES IN:")
                 expiryRow
+                
+                if isCustomExpiry {
+                    DatePicker(
+                        "Custom Expiry Date",
+                        selection: $expiryDate,
+                        in: Date()...,
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.graphical)
+                    .accentColor(.brandGreen)
+                    .padding(16)
+                    .background(Color(red: 0.95, green: 0.95, blue: 0.95), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                }
             }
 
             if let saveFeedbackMessage {
@@ -229,7 +243,13 @@ struct AddItemView: View {
 
         return Button {
             selectedExpiryDays = days
-            expiryDate = Calendar.current.date(byAdding: .day, value: days, to: .now) ?? .now
+            if days == 0 {
+                isCustomExpiry = true
+                expiryDate = .now
+            } else {
+                isCustomExpiry = false
+                expiryDate = Calendar.current.date(byAdding: .day, value: days, to: .now) ?? .now
+            }
         } label: {
             VStack(spacing: 12) {
                 Text(expiryTitle(for: days))
@@ -313,8 +333,10 @@ struct AddItemView: View {
             return "3 Days"
         case 5:
             return "5 Days"
-        default:
+        case 7:
             return "1 Week"
+        default:
+            return "Custom"
         }
     }
 
@@ -332,11 +354,17 @@ struct AddItemView: View {
                 Color(red: 0.56, green: 0.42, blue: 0.04),
                 Color(red: 0.98, green: 0.73, blue: 0.06)
             )
-        default:
+        case 7:
             return (
                 Color.statusEmerald.opacity(0.10),
                 Color.statusEmerald,
                 Color.statusEmerald.opacity(0.55)
+            )
+        default:
+            return (
+                Color.secondary.opacity(0.12),
+                Color.secondary,
+                Color.secondary.opacity(0.35)
             )
         }
     }
