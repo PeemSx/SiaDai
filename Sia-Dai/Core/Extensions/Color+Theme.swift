@@ -8,4 +8,5 @@ extension Color {
     static let statusAmber = Color(red: 0.93, green: 0.68, blue: 0.19)
     static let statusEmerald = Color(red: 0.12, green: 0.61, blue: 0.37)
     static let cardShadow = Color.black.opacity(0.08)
+    static let dimeCard = Color(white: 0.1)
 }
