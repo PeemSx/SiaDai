@@ -56,9 +56,9 @@ struct AddItemView: View {
 
                 LinearGradient(
                     colors: [
-                        Color.black.opacity(0.42),
+                        Color.white.opacity(0.95),
                         Color.clear,
-                        Color.white.opacity(0.95)
+                        Color.black.opacity(0.42)
                     ],
                     startPoint: .top,
                     endPoint: .bottom

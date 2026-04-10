@@ -8,23 +8,23 @@ struct WatchlistView: View {
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16)
     ]
-
+    
     private var activeItems: [FoodItem] {
         foodItems.filter { $0.status == .tracking }
     }
-
+    
     var body: some View {
         ZStack {
             Color.screenBackground
                 .ignoresSafeArea()
-
+            
             VStack(spacing: 0) {
                 TopBrandBar()
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 26) {
                         inventoryHeader
-
+                        
                         if activeItems.isEmpty {
                             emptyState
                         } else {
@@ -43,7 +43,7 @@ struct WatchlistView: View {
             }
         }
     }
-
+    
     private var inventoryHeader: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("YOUR INVENTORY")
@@ -56,9 +56,8 @@ struct WatchlistView: View {
                     .font(.system(size: 40, weight: .bold, design: .rounded))
                     .foregroundStyle(.black)
                     .minimumScaleFactor(0.82)
-
+                
                 Spacer(minLength: 10)
-
             }
         }
     }

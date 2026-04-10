@@ -18,11 +18,13 @@ struct WasteJarView: View {
         ZStack {
             Color.screenBackground
                 .ignoresSafeArea()
-
+            
             ScrollView(showsIndicators: false) {
+                TopBrandBar()
                 VStack(alignment: .leading, spacing: 24) {
-                    header
 
+                    header
+                    
                     VStack(spacing: 16) {
                         insightCard
 
