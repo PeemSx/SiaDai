@@ -15,6 +15,9 @@ struct AddItemView: View {
     @State private var expiryDate: Date = Calendar.current.date(byAdding: .day, value: 5, to: .now) ?? .now
     @State private var selectedPhotoItem: PhotosPickerItem? 
     @State private var selectedImageData: Data?
+    @State private var classificationResult: IngredientClassification?
+    @State private var classificationMessage: String?
+    @State private var isClassifyingPhoto = false
     @State private var saveFeedbackMessage: String?
     @State private var showsSuccessFeedback = false
 
@@ -101,6 +104,10 @@ struct AddItemView: View {
                     .foregroundStyle(.black)
 
                 nameField
+
+                if isClassifyingPhoto || classificationResult != nil || classificationMessage != nil {
+                    classificationStatusView
+                }
             }
 
             VStack(alignment: .leading, spacing: 12) {
@@ -320,6 +327,89 @@ struct AddItemView: View {
         }
     }
 
+    @ViewBuilder
+    private var classificationStatusView: some View {
+        if isClassifyingPhoto {
+            classificationChip(
+                icon: "sparkles.rectangle.stack.fill",
+                message: "Analyzing the ingredient photo...",
+                tint: Color.secondary
+            )
+        } else if let classificationResult {
+            VStack(alignment: .leading, spacing: 12) {
+                classificationChip(
+                    icon: "sparkles.rectangle.stack.fill",
+                    message: "Pick the correct ingredient from the top matches below.",
+                    tint: Color.brandGreen
+                )
+
+                VStack(spacing: 10) {
+                    ForEach(classificationResult.predictions) { prediction in
+                        predictionButton(for: prediction)
+                    }
+                }
+            }
+        } else if let classificationMessage {
+            classificationChip(
+                icon: "exclamationmark.triangle.fill",
+                message: classificationMessage,
+                tint: Color.statusAmber
+            )
+        }
+    }
+
+    private func classificationChip(icon: String, message: String, tint: Color) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
+
+            Text(message)
+                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .multilineTextAlignment(.leading)
+        }
+        .foregroundStyle(tint)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(tint.opacity(0.10), in: Capsule())
+    }
+
+    private func predictionButton(for prediction: IngredientPrediction) -> some View {
+        let isSelected =
+            nameText
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .localizedCaseInsensitiveCompare(prediction.displayName) == .orderedSame
+
+        return Button {
+            nameText = prediction.displayName
+        } label: {
+            HStack(spacing: 14) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(prediction.displayName)
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundStyle(isSelected ? .white : .black)
+
+                    Text("\(predictionConfidenceText(for: prediction)) match")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(isSelected ? .white.opacity(0.84) : Color.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "arrow.up.left.and.arrow.down.right")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(isSelected ? .white : Color.brandGreen)
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                isSelected ? Color.brandGreen : Color(red: 0.95, green: 0.95, blue: 0.95),
+                in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
     private func fieldLabel(_ title: String) -> some View {
         Text(title)
             .font(.system(size: 13, weight: .bold, design: .rounded))
@@ -395,24 +485,63 @@ struct AddItemView: View {
 
         do {
             if let data = try await selectedPhotoItem.loadTransferable(type: Data.self) {
-                await MainActor.run {
-                    guard let resizedData = resizedImageData(from: data) else {
+                guard let resizedData = resizedImageData(from: data) else {
+                    await MainActor.run {
+                        isClassifyingPhoto = false
+                        classificationResult = nil
+                        classificationMessage = nil
                         showsSuccessFeedback = false
                         saveFeedbackMessage = "Photo could not be loaded."
-                        return
                     }
+                    return
+                }
 
+                await MainActor.run {
                     selectedImageData = resizedData
+                    classificationResult = nil
+                    classificationMessage = nil
+                    isClassifyingPhoto = true
                     showsSuccessFeedback = false
                     saveFeedbackMessage = nil
+                }
+
+                do {
+                    let classification = try await Task.detached(priority: .userInitiated) {
+                        try IngredientImageClassifier.classify(imageData: resizedData)
+                    }.value
+
+                    await MainActor.run {
+                        applyClassification(classification)
+                    }
+                } catch {
+                    await MainActor.run {
+                        isClassifyingPhoto = false
+                        classificationResult = nil
+                        classificationMessage = "Couldn't identify the ingredient from this photo."
+                    }
                 }
             }
         } catch {
             await MainActor.run {
+                isClassifyingPhoto = false
+                classificationResult = nil
+                classificationMessage = nil
                 showsSuccessFeedback = false
                 saveFeedbackMessage = "Photo could not be loaded."
             }
         }
+    }
+
+    private func applyClassification(_ classification: IngredientClassification) {
+        classificationResult = classification
+        classificationMessage = nil
+        isClassifyingPhoto = false
+    }
+
+    private func predictionConfidenceText(for prediction: IngredientPrediction) -> String {
+        let percentage = Int((prediction.confidence * 100).rounded())
+        let clampedPercentage = min(100, max(0, percentage))
+        return "\(clampedPercentage)%"
     }
 
     private func resizedImageData(from data: Data, maxDimension: CGFloat = 1400) -> Data? {
