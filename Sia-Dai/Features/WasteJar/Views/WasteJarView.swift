@@ -44,11 +44,10 @@ struct WasteJarView: View {
                         
                         WasteChartView(data: mockChartData)
                         
-                        insightBlock
-                        
+                        earthImpactCard
+                                                
                         mostTrashedSection
                         
-                        earthImpactCard
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
@@ -82,18 +81,6 @@ struct WasteJarView: View {
             .padding(.vertical, 8)
             .background(Color(red: 0.98, green: 0.92, blue: 0.92), in: Capsule())
         }
-    }
-
-    private var insightBlock: some View {
-        Text("Discarded \(Text(String(format: "%.1f lbs", totalWeightLost)).foregroundStyle(Color.statusCrimson).fontWeight(.bold)) of edible food in 28 days.")
-            .font(.system(size: 18))
-            .foregroundStyle(.secondary)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 30)
-            .padding(.vertical, 24)
-            .frame(maxWidth: .infinity)
-            .background(Color.white, in: Capsule())
-            .shadow(color: .cardShadow, radius: 12, x: 0, y: 8)
     }
 
     private var mostTrashedSection: some View {
