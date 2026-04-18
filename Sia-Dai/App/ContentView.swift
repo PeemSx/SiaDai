@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @State private var selectedTab: AppTab = .watchlist
+    @State private var selectedTab: AppTab = .home
 
     var body: some View {
         NavigationStack {
@@ -19,7 +19,7 @@ struct ContentView: View {
     private var activeTabView: some View {
         switch selectedTab {
         case .home:
-            WasteJarView()
+            HomeView()
         case .watchlist:
             WatchlistView()
         case .addItem:
