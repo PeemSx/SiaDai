@@ -3,6 +3,7 @@ import SwiftData
 
 struct WatchlistView: View {
     @Query(sort: \FoodItem.expiryDate) private var foodItems: [FoodItem]
+    @State private var activeSheet: WatchlistSheet?
 
     private let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -30,7 +31,12 @@ struct WatchlistView: View {
                         } else {
                             LazyVGrid(columns: columns, spacing: 28) {
                                 ForEach(activeItems, id: \.id) { item in
-                                    FoodCardView(item: item)
+                                    Button {
+                                        activeSheet = .edit(item)
+                                    } label: {
+                                        FoodCardView(item: item)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                             .padding(.top, 6)
@@ -40,6 +46,16 @@ struct WatchlistView: View {
                     .padding(.top, 26)
                     .padding(.bottom, 180)
                 }
+            }
+        }
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .add:
+                AddItemView()
+                    .presentationDragIndicator(.visible)
+            case let .edit(item):
+                EditItemView(item: item)
+                    .presentationDragIndicator(.visible)
             }
         }
     }
@@ -56,8 +72,21 @@ struct WatchlistView: View {
                     .font(.system(size: 40, weight: .bold, design: .rounded))
                     .foregroundStyle(.black)
                     .minimumScaleFactor(0.82)
-                
+
                 Spacer(minLength: 10)
+
+                Button {
+                    activeSheet = .add
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(.black)
+                        .frame(width: 52, height: 52)
+                        .background(Color.white, in: Circle())
+                        .shadow(color: .cardShadow, radius: 12, x: 0, y: 8)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Add Item")
             }
         }
     }
@@ -84,6 +113,20 @@ struct WatchlistView: View {
                         .padding(.horizontal, 28)
                 }
             }
+    }
+}
+
+private enum WatchlistSheet: Identifiable {
+    case add
+    case edit(FoodItem)
+
+    var id: String {
+        switch self {
+        case .add:
+            return "add"
+        case let .edit(item):
+            return "edit-\(item.id.uuidString)"
+        }
     }
 }
 

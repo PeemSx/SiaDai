@@ -28,7 +28,7 @@ enum PreviewHelper {
                 name: "Salmon",
                 purchaseValue: 12.99,
                 amount: 2,
-                unit: "fillets",
+                unit: "pcs",
                 dateAdded: calendar.date(byAdding: .day, value: -2, to: now) ?? now,
                 expiryDate: now,
                 status: .tracking
@@ -64,7 +64,7 @@ enum PreviewHelper {
                 name: "Greek Yogurt",
                 purchaseValue: 4.50,
                 amount: 1,
-                unit: "cup",
+                unit: "pack",
                 dateAdded: calendar.date(byAdding: .day, value: -3, to: now) ?? now,
                 expiryDate: calendar.date(byAdding: .day, value: 1, to: now) ?? now,
                 status: .eaten
@@ -76,6 +76,7 @@ enum PreviewHelper {
                 unit: "pack",
                 dateAdded: calendar.date(byAdding: .day, value: -6, to: now) ?? now,
                 expiryDate: calendar.date(byAdding: .day, value: -2, to: now) ?? now,
+                wasteRecordedAt: calendar.date(byAdding: .month, value: -1, to: now) ?? now,
                 status: .trashed
             )
         ]

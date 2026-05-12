@@ -199,13 +199,16 @@ final class QuickActionsViewModel {
         in modelContext: ModelContext
     ) -> Bool {
         let originalStatus = item.status
+        let originalWasteRecordedAt = item.wasteRecordedAt
         item.status = status
+        item.wasteRecordedAt = status == .trashed ? .now : nil
 
         do {
             try modelContext.save()
             return true
         } catch {
             item.status = originalStatus
+            item.wasteRecordedAt = originalWasteRecordedAt
             modelContext.rollback()
             print("Quick action save failed: \(error)")
             return false

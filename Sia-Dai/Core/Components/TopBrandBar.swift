@@ -24,14 +24,6 @@ struct TopBrandBar: View {
                 .foregroundStyle(.black)
 
             Spacer()
-
-            Button {} label: {
-                Image(systemName: "bell")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(Color.secondary)
-                    .frame(width: 40, height: 40)
-            }
-            .buttonStyle(.plain)
         }
         .padding(.horizontal, 24)
         .padding(.top, 16)

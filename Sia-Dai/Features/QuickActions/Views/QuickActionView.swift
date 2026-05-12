@@ -7,8 +7,67 @@ struct QuickActionView: View {
     let onMarkEaten: () -> Void
     let onMarkTrashed: () -> Void
 
+    private var daysRemaining: Int {
+        Date().daysUntil(item.expiryDate)
+    }
+
     private var urgency: QuickActionUrgency {
         viewModel.urgency(for: item)
+    }
+
+    private var fallbackAccentColor: Color {
+        switch daysRemaining {
+        case ...0:
+            return .statusCrimson
+        case 1...3:
+            return .statusAmber
+        default:
+            return .statusEmerald
+        }
+    }
+
+    private var fallbackPalette: [Color] {
+        let lowercasedName = item.name.lowercased()
+
+        if lowercasedName.contains("salmon") {
+            return [Color(red: 0.10, green: 0.13, blue: 0.15), Color(red: 0.28, green: 0.17, blue: 0.14)]
+        }
+
+        if lowercasedName.contains("milk") {
+            return [Color(red: 0.31, green: 0.24, blue: 0.16), Color(red: 0.08, green: 0.09, blue: 0.12)]
+        }
+
+        if lowercasedName.contains("spinach") {
+            return [Color(red: 0.12, green: 0.18, blue: 0.16), Color(red: 0.24, green: 0.32, blue: 0.28)]
+        }
+
+        if lowercasedName.contains("apple") {
+            return [Color(red: 0.25, green: 0.25, blue: 0.28), Color(red: 0.17, green: 0.18, blue: 0.20)]
+        }
+
+        return [Color(red: 0.14, green: 0.22, blue: 0.20), Color(red: 0.10, green: 0.16, blue: 0.15)]
+    }
+
+    private var fallbackSymbolName: String {
+        let lowercasedName = item.name.lowercased()
+
+        if lowercasedName.contains("salmon") || lowercasedName.contains("fish") {
+            return "fish.fill"
+        }
+
+        if lowercasedName.contains("milk") {
+            return "drop.fill"
+        }
+
+        if lowercasedName.contains("spinach") || lowercasedName.contains("leaf") {
+            return "leaf.fill"
+        }
+
+        if lowercasedName.contains("apple") {
+            return "basket.fill"
+        }
+
+        return "carrot.fill"
     }
 
     var body: some View {
@@ -34,8 +93,6 @@ struct QuickActionView: View {
                     action: onMarkTrashed
                 )
             }
-
-            impactCard
         }
     }
 
@@ -116,61 +173,6 @@ struct QuickActionView: View {
         .buttonStyle(.plain)
     }
 
-    private var impactCard: some View {
-        HStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("IMPACT SCORE")
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .tracking(1.4)
-                    .foregroundStyle(.secondary)
-
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text("+\(viewModel.impactPoints(for: item)) XP")
-                        .font(.system(size: 20, weight: .black, design: .rounded))
-                        .foregroundStyle(.black)
-
-                    Text("Earned if consumed")
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Color.brandGreen)
-                }
-            }
-
-            Spacer()
-
-            ZStack {
-                Circle()
-                    .stroke(Color.black.opacity(0.08), lineWidth: 7)
-
-                Circle()
-                    .trim(from: 0, to: max(0.08, viewModel.freshnessProgress(for: item)))
-                    .stroke(
-                        AngularGradient(
-                            colors: [
-                                Color.statusCrimson,
-                                Color.statusAmber,
-                                Color.brandGreen
-                            ],
-                            center: .center
-                        ),
-                        style: StrokeStyle(lineWidth: 7, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-
-                Text(viewModel.remainingTimeText(for: item))
-                    .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(.black.opacity(0.74))
-            }
-            .frame(width: 56, height: 56)
-        }
-        .padding(.horizontal, 22)
-        .padding(.vertical, 20)
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .fill(Color.white.opacity(0.90))
-        )
-        .shadow(color: .cardShadow, radius: 14, x: 0, y: 10)
-    }
 
     @ViewBuilder
     private func coverImage(size: CGSize) -> some View {
@@ -189,76 +191,23 @@ struct QuickActionView: View {
                 )
 
                 Circle()
-                    .fill(Color.white.opacity(0.16))
-                    .frame(width: 220, height: 220)
-                    .blur(radius: 20)
-                    .offset(x: -80, y: -60)
-
-                Circle()
-                    .fill(urgency.accentColor.opacity(0.26))
-                    .frame(width: 210, height: 210)
-                    .blur(radius: 18)
-                    .offset(x: 90, y: 80)
+                    .fill(fallbackAccentColor.opacity(0.24))
+                    .frame(width: 140, height: 140)
+                    .blur(radius: 12)
+                    .offset(x: 44, y: 34)
 
                 Image(systemName: fallbackSymbolName)
-                    .font(.system(size: 110, weight: .regular))
-                    .foregroundStyle(.white.opacity(0.88))
+                    .font(.system(size: 66, weight: .regular))
+                    .foregroundStyle(.white.opacity(0.92))
+
+                RoundedRectangle(cornerRadius: 30, style: .continuous)
+                    .stroke(.white.opacity(0.12), lineWidth: 1.5)
+                    .padding(18)
             }
             .frame(width: size.width, height: size.height)
         }
     }
 
-    private var fallbackPalette: [Color] {
-        let lowercasedName = item.name.lowercased()
-
-        if lowercasedName.contains("spinach") || lowercasedName.contains("leaf") {
-            return [
-                Color(red: 0.26, green: 0.68, blue: 0.57),
-                Color(red: 0.05, green: 0.31, blue: 0.24)
-            ]
-        }
-
-        if lowercasedName.contains("apple") {
-            return [
-                Color(red: 0.28, green: 0.64, blue: 0.34),
-                Color(red: 0.07, green: 0.24, blue: 0.14)
-            ]
-        }
-
-        if lowercasedName.contains("salmon") || lowercasedName.contains("fish") {
-            return [
-                Color(red: 0.21, green: 0.27, blue: 0.31),
-                Color(red: 0.07, green: 0.12, blue: 0.14)
-            ]
-        }
-
-        return [
-            Color(red: 0.24, green: 0.52, blue: 0.44),
-            Color(red: 0.07, green: 0.21, blue: 0.18)
-        ]
-    }
-
-    private var fallbackSymbolName: String {
-        let lowercasedName = item.name.lowercased()
-
-        if lowercasedName.contains("salmon") || lowercasedName.contains("fish") {
-            return "fish.fill"
-        }
-
-        if lowercasedName.contains("milk") {
-            return "drop.fill"
-        }
-
-        if lowercasedName.contains("spinach") || lowercasedName.contains("leaf") {
-            return "leaf.fill"
-        }
-
-        if lowercasedName.contains("apple") {
-            return "basket.fill"
-        }
-
-        return "carrot.fill"
-    }
 }
 
 #Preview {

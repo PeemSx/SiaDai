@@ -19,6 +19,7 @@ final class FoodItem {
     var unit: String
     var dateAdded: Date
     var expiryDate: Date
+    var wasteRecordedAt: Date?
     var status: FoodItemStatus
 
     init(
@@ -30,6 +31,7 @@ final class FoodItem {
         unit: String,
         dateAdded: Date = .now,
         expiryDate: Date,
+        wasteRecordedAt: Date? = nil,
         status: FoodItemStatus = .tracking
     ) {
         self.id = id
@@ -40,6 +42,32 @@ final class FoodItem {
         self.unit = unit
         self.dateAdded = dateAdded
         self.expiryDate = expiryDate
+        self.wasteRecordedAt = wasteRecordedAt
         self.status = status
+    }
+
+    convenience init(
+        id: UUID = UUID(),
+        name: String,
+        imageData: Data? = nil,
+        purchaseValue: Double,
+        amount: Double,
+        unit: String,
+        dateAdded: Date = .now,
+        expiryDate: Date,
+        status: FoodItemStatus = .tracking
+    ) {
+        self.init(
+            id: id,
+            name: name,
+            imageData: imageData,
+            purchaseValue: purchaseValue,
+            amount: amount,
+            unit: unit,
+            dateAdded: dateAdded,
+            expiryDate: expiryDate,
+            wasteRecordedAt: nil,
+            status: status
+        )
     }
 }

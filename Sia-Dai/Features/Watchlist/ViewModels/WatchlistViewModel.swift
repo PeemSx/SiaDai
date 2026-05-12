@@ -52,11 +52,13 @@ final class WatchlistViewModel {
 
     func markAsEaten(item: FoodItem) {
         item.status = .eaten
+        item.wasteRecordedAt = nil
         saveChangesAndRefresh()
     }
 
     func markAsTrashed(item: FoodItem) {
         item.status = .trashed
+        item.wasteRecordedAt = .now
         saveChangesAndRefresh()
     }
 

@@ -4,6 +4,7 @@ import SwiftUI
 import UIKit
 
 struct AddItemView: View {
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     
     @State private var nameText: String = ""
@@ -472,8 +473,7 @@ struct AddItemView: View {
         )
 
         if didSave {
-            showsSuccessFeedback = true
-            saveFeedbackMessage = "Saved to Watchlist."
+            dismiss()
         } else {
             showsSuccessFeedback = false
             saveFeedbackMessage = "Please enter valid value and amount."

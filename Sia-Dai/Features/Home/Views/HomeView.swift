@@ -5,12 +5,28 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \FoodItem.expiryDate) private var foodItems: [FoodItem]
 
-    @State private var quickActionMessage: String?
+    @State private var recipesViewModel = RescueRecipesViewModel()
 
     private let viewModel = QuickActionsViewModel()
+    private let recipeInventoryManager = RecipeInventoryManager()
 
     private var priorityItem: FoodItem? {
         viewModel.priorityItem(from: foodItems)
+    }
+
+    private var trackingItems: [FoodItem] {
+        foodItems
+            .filter { $0.status == .tracking && $0.amount > 0 }
+            .sorted { lhs, rhs in
+                let lhsDays = Date().daysUntil(lhs.expiryDate)
+                let rhsDays = Date().daysUntil(rhs.expiryDate)
+
+                if lhsDays != rhsDays {
+                    return lhsDays < rhsDays
+                }
+
+                return lhs.dateAdded < rhs.dateAdded
+            }
     }
 
     private var preventableLoss: Double {
@@ -29,10 +45,6 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 28) {
                         headerSection
 
-                        if let quickActionMessage {
-                            feedbackChip(message: quickActionMessage)
-                        }
-
                         if let priorityItem {
                             QuickActionView(
                                 item: priorityItem,
@@ -44,6 +56,34 @@ struct HomeView: View {
                                     performQuickAction(.trashed, for: priorityItem)
                                 }
                             )
+
+                            RescueRecipesSectionView(
+                                recipes: recipesViewModel.recipes,
+                                sourceItems: trackingItems,
+                                isLoading: recipesViewModel.isLoading,
+                                statusState: recipesViewModel.currentStatusState,
+                                statusTitle: recipesViewModel.statusTitle,
+                                statusMessage: recipesViewModel.statusMessage,
+                                recommendation: recipesViewModel.recommendation,
+                                showsHeaderAction: recipesViewModel.showsHeaderAction,
+                                headerActionTitle: recipesViewModel.headerActionTitle,
+                                showsStatusAction: recipesViewModel.showsStatusAction,
+                                statusActionTitle: recipesViewModel.statusActionTitle,
+                                onGenerateRecipes: requestRecipes,
+                                onMarkRecipeAsMade: { recipe in
+                                    let result = recipeInventoryManager.applyRecipe(
+                                        recipe,
+                                        to: foodItems,
+                                        in: modelContext
+                                    )
+
+                                    if result.didApply {
+                                        recipesViewModel.clearRecipesAfterMarkAsMade()
+                                    }
+
+                                    return result
+                                }
+                            )
                         } else {
                             emptyState
                         }
@@ -53,6 +93,9 @@ struct HomeView: View {
                     .padding(.bottom, 180)
                 }
             }
+        }
+        .task(id: recipeTaskID) {
+            recipesViewModel.syncInventory(trackingItems)
         }
     }
 
@@ -71,20 +114,6 @@ struct HomeView: View {
                 .font(.system(size: 17, weight: .medium, design: .rounded))
                 .foregroundStyle(.secondary)
         }
-    }
-
-    private func feedbackChip(message: String) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 14, weight: .bold))
-
-            Text(message)
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
-        }
-        .foregroundStyle(Color.brandGreen)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color.brandGreen.opacity(0.10), in: Capsule())
     }
 
     private var emptyState: some View {
@@ -132,17 +161,23 @@ struct HomeView: View {
     private func performQuickAction(_ status: FoodItemStatus, for item: FoodItem) {
         let didSave = viewModel.updateStatus(status, for: item, in: modelContext)
 
-        guard didSave else {
-            quickActionMessage = "Couldn’t update this item right now."
-            return
+        if didSave == false {
+            assertionFailure("Failed to update quick action item status.")
         }
+    }
 
-        let actionText = status == .eaten ? "saved" : "logged"
-        let valueText = viewModel.currencyString(for: item.purchaseValue)
-
-        withAnimation(.snappy(duration: 0.28, extraBounce: 0)) {
-            quickActionMessage = "\(item.name) \(actionText) for \(valueText)."
+    private func requestRecipes() {
+        Task {
+            await recipesViewModel.generateRecipes(from: trackingItems)
         }
+    }
+
+    private var recipeTaskID: String {
+        trackingItems
+            .map { item in
+                "\(item.id.uuidString)-\(item.amount)-\(item.status.rawValue)-\(item.unit)"
+            }
+            .joined(separator: "|")
     }
 }
 

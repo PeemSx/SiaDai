@@ -3,27 +3,38 @@ import SwiftData
 
 struct WasteJarView: View {
     @Query private var allFoodItems: [FoodItem]
+    @State private var viewModel = WasteJarViewModel()
 
-    private var wastedItems: [FoodItem] {
-        allFoodItems.filter { $0.status == .trashed || ($0.status == .tracking && $0.expiryDate < .now) }
+    private var trashedItems: [FoodItem] {
+        viewModel.trashedItems(from: allFoodItems)
     }
 
     private var totalLostThisMonth: Double {
-        wastedItems.reduce(0) { $0 + $1.purchaseValue }
+        viewModel.totalLostThisMonth(from: allFoodItems)
     }
 
-    private var totalWeightLost: Double {
-        wastedItems.reduce(0) { $0 + ($1.amount * 0.5) }
+    private var chartData: [WasteData] {
+        viewModel.chartData(from: allFoodItems)
     }
 
-    private var mostTrashedItems: [(name: String, count: Int, totalValue: Double, unit: String)] {
-        let grouped = Dictionary(grouping: wastedItems, by: { $0.name })
-        return grouped.map { (name, items) in
-            (name: name, count: items.count, totalValue: items.reduce(0) { $0 + $1.purchaseValue }, unit: items.first?.unit ?? "pcs")
-        }
-        .sorted(by: { $0.count > $1.count })
-        .prefix(3)
-        .map { $0 }
+    private var selectedMonthTitle: String {
+        viewModel.selectedMonthTitle
+    }
+
+    private var canGoForwardMonth: Bool {
+        viewModel.canGoForwardMonth()
+    }
+
+    private var trendMessage: String {
+        viewModel.trendMessage(from: allFoodItems)
+    }
+
+    private var trendColor: Color {
+        viewModel.trendColor(from: allFoodItems)
+    }
+
+    private var summaryTitle: String {
+        viewModel.summaryTitle
     }
 
     var body: some View {
@@ -41,13 +52,19 @@ struct WasteJarView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 32) {
                         summaryHeader
-                        
-                        WasteChartView(data: mockChartData)
-                        
+
+                        WasteChartView(
+                            data: chartData,
+                            monthTitle: selectedMonthTitle,
+                            canGoForward: canGoForwardMonth,
+                            onPreviousMonth: { viewModel.showPreviousMonth() },
+                            onNextMonth: { viewModel.showNextMonth() }
+                        )
+
                         earthImpactCard
-                                                
-                        mostTrashedSection
-                        
+
+                        trashedItemsSection
+
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
@@ -59,7 +76,7 @@ struct WasteJarView: View {
 
     private var summaryHeader: some View {
         VStack(spacing: 8) {
-            Text("TOTAL LOST THIS MONTH")
+            Text(summaryTitle)
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(.secondary.opacity(0.6))
                 .tracking(1.2)
@@ -70,49 +87,43 @@ struct WasteJarView: View {
 
             HStack(spacing: 6) {
                 Circle()
-                    .fill(Color.statusCrimson)
+                    .fill(trendColor)
                     .frame(width: 8, height: 8)
                 
-                Text("12% higher than last month")
+                Text(trendMessage)
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Color.statusCrimson)
+                    .foregroundStyle(trendColor)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            .background(Color(red: 0.98, green: 0.92, blue: 0.92), in: Capsule())
+            .background(trendColor.opacity(0.12), in: Capsule())
         }
     }
 
-    private var mostTrashedSection: some View {
+    private var trashedItemsSection: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
-                Text("Most Trashed Items")
+                Text("Trashed Items")
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(.black)
-                
-                Spacer()
-                
-                Button("View History") { }
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Color.brandGreen)
             }
 
             VStack(spacing: 16) {
-                if mostTrashedItems.isEmpty {
+                if trashedItems.isEmpty {
                     Text("No waste items logged yet.")
                         .foregroundStyle(.secondary)
                         .padding()
                 } else {
-                    ForEach(mostTrashedItems, id: \.name) { item in
-                        trashedRow(name: item.name, count: item.count, value: item.totalValue, unit: item.unit)
+                    ForEach(trashedItems, id: \.id) { item in
+                        trashedRow(for: item)
                     }
                 }
             }
         }
     }
 
-    private func trashedRow(name: String, count: Int, value: Double, unit: String) -> some View {
-        HStack(spacing: 16) {
+    private func trashedRow(for item: FoodItem) -> some View {
+        return HStack(spacing: 16) {
             ZStack {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(Color.black.opacity(0.03))
@@ -124,22 +135,16 @@ struct WasteJarView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(name)
+                Text(item.name)
                     .font(.system(size: 18, weight: .bold, design: .rounded))
                     .foregroundStyle(.black)
-                
-                Text("\(count) \(unit) • \(String(format: "$%.2f", value))")
+
+                Text("\(viewModel.amountLabel(for: item)) • \(viewModel.currencyString(for: item.purchaseValue))")
                     .font(.system(size: 14, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
-
-            if value > 20 || count >= 3 {
-                statusBadge(text: "CRITICAL", color: Color.statusCrimson)
-            } else {
-                statusBadge(text: "FREQUENT", color: Color.statusAmber)
-            }
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .bold))
@@ -149,15 +154,6 @@ struct WasteJarView: View {
         .padding(.vertical, 14)
         .background(Color.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
         .shadow(color: .cardShadow, radius: 12, x: 0, y: 8)
-    }
-
-    private func statusBadge(text: String, color: Color) -> some View {
-        Text(text)
-            .font(.system(size: 10, weight: .black))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(color.opacity(0.15), in: RoundedRectangle(cornerRadius: 6))
-            .foregroundStyle(color)
     }
 
     private var earthImpactCard: some View {
@@ -196,15 +192,6 @@ struct WasteJarView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
         .shadow(color: .cardShadow, radius: 20, x: 0, y: 12)
-    }
-
-    private var mockChartData: [WasteData] {
-        [
-            WasteData(week: "WK 01", amount: 12.50),
-            WasteData(week: "WK 02", amount: 8.75),
-            WasteData(week: "WK 03", amount: 15.50),
-            WasteData(week: "WK 04", amount: 8.25)
-        ]
     }
 }
 

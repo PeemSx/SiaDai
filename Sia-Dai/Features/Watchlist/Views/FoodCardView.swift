@@ -80,6 +80,11 @@ struct FoodCardView: View {
                     .foregroundStyle(.black)
                     .lineLimit(2)
 
+                Text(FoodQuantityFormatter.string(amount: item.amount, unit: item.unit))
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(.black.opacity(0.72))
+                    .tracking(0.4)
+
                 Text(item.expiryDate.watchlistDateLabel())
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.secondary)

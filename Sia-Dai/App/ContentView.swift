@@ -22,14 +22,10 @@ struct ContentView: View {
             HomeView()
         case .watchlist:
             WatchlistView()
-        case .addItem:
-            AddItemView()
         case .wasteJar:
             WasteJarView()
-
         }
     }
-
 }
 
 #Preview {

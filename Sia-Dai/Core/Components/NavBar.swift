@@ -3,9 +3,7 @@ import SwiftUI
 enum AppTab: String, CaseIterable, Hashable {
     case home = "Home"
     case watchlist = "Watch"
-    case addItem = "Add"
     case wasteJar = "Bin"
-
 
     var symbolName: String {
         switch self {
@@ -13,8 +11,6 @@ enum AppTab: String, CaseIterable, Hashable {
             return "house.fill"
         case .watchlist:
             return "eye.fill"
-        case .addItem:
-            return "plus.circle"
         case .wasteJar:
             return "trash"
         }
@@ -26,8 +22,6 @@ enum AppTab: String, CaseIterable, Hashable {
             return "Home"
         case .watchlist:
             return "Watchlist"
-        case .addItem:
-            return "Add Item"
         case .wasteJar:
             return "Waste Jar"
         }
