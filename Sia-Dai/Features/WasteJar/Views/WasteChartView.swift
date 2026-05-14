@@ -8,6 +8,10 @@ struct WasteChartView: View {
     let onPreviousMonth: () -> Void
     let onNextMonth: () -> Void
 
+    private var maxValue: Double {
+        data.map { $0.amount }.max() ?? 0
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .center) {
@@ -38,14 +42,15 @@ struct WasteChartView: View {
                     )
                     .foregroundStyle(Color(red: 0.35, green: 0.80, blue: 0.52))
                     .cornerRadius(6)
-                    .annotation(position: .top) {
+                    .annotation(position: .top, spacing: 5) {
                         Text(String(format: "฿%.2f", item.amount))
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(Color(red: 0.15, green: 0.55, blue: 0.35))
+                            .foregroundStyle(item.amount > 0 ? Color(red: 0.15, green: 0.55, blue: 0.35) : .secondary.opacity(0.5))
                     }
                 }
             }
             .frame(height: 200)
+            .chartYScale(domain: 0...max(maxValue * 1.2, 100))
             .chartXAxis {
                 AxisMarks { _ in
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 1)).foregroundStyle(.black.opacity(0.04))
@@ -53,13 +58,13 @@ struct WasteChartView: View {
                 }
             }
             .chartYAxis {
-                AxisMarks { value in
+                AxisMarks(position: .leading) { value in
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 1)).foregroundStyle(.black.opacity(0.04))
                     AxisValueLabel {
                         if let doubleValue = value.as(Double.self) {
-                            Text("฿\(Int(doubleValue))")
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(.black)
+                            Text(String(format: "฿%.0f", doubleValue))
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -85,21 +90,4 @@ struct WasteChartView: View {
         .buttonStyle(.plain)
         .disabled(isDisabled)
     }
-}
-
-#Preview {
-    WasteChartView(
-        data: [
-            WasteData(id: "wk-01", week: "WK 01", amount: 12.50),
-            WasteData(id: "wk-02", week: "WK 02", amount: 8.75),
-            WasteData(id: "wk-03", week: "WK 03", amount: 15.50),
-            WasteData(id: "wk-04", week: "WK 04", amount: 8.25)
-        ],
-        monthTitle: "May 2026",
-        canGoForward: false,
-        onPreviousMonth: {},
-        onNextMonth: {}
-    )
-    .padding()
-    .background(Color.screenBackground)
 }
