@@ -39,7 +39,7 @@ struct WasteChartView: View {
                     .foregroundStyle(Color(red: 0.35, green: 0.80, blue: 0.52))
                     .cornerRadius(6)
                     .annotation(position: .top) {
-                        Text(String(format: "$%.2f", item.amount))
+                        Text(String(format: "฿%.2f", item.amount))
                             .font(.system(size: 11, weight: .bold))
                             .foregroundStyle(Color(red: 0.15, green: 0.55, blue: 0.35))
                     }
@@ -57,7 +57,7 @@ struct WasteChartView: View {
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 1)).foregroundStyle(.black.opacity(0.04))
                     AxisValueLabel {
                         if let doubleValue = value.as(Double.self) {
-                            Text("$\(Int(doubleValue))")
+                            Text("฿\(Int(doubleValue))")
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundStyle(.black)
                         }

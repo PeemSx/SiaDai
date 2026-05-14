@@ -185,11 +185,7 @@ final class QuickActionsViewModel {
     }
 
     func currencyString(for value: Double) -> String {
-        if value.rounded() == value {
-            return String(format: "$%.0f", value)
-        }
-
-        return String(format: "$%.2f", value)
+        return String(format: "฿%.2f", value)
     }
 
     @discardableResult

@@ -50,7 +50,7 @@ final class WasteJarViewModel {
         referenceDate: Date = .now,
         calendar: Calendar = .current
     ) -> [FoodItem] {
-        wastedItems(from: foodItems, referenceDate: referenceDate, calendar: calendar)
+        selectedMonthWasteItems(from: foodItems, referenceDate: referenceDate, calendar: calendar)
             .sorted { lhs, rhs in
                 let lhsEventDate = wasteEventDate(for: lhs)
                 let rhsEventDate = wasteEventDate(for: rhs)
@@ -207,11 +207,7 @@ final class WasteJarViewModel {
     }
 
     func currencyString(for value: Double) -> String {
-        if value.rounded() == value {
-            return String(format: "$%.0f", value)
-        }
-
-        return String(format: "$%.2f", value)
+        return String(format: "฿%.2f", value)
     }
 
     func showPreviousMonth(calendar: Calendar = .current) {

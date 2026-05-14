@@ -144,7 +144,7 @@ struct EditItemView: View {
             }
 
             VStack(alignment: .leading, spacing: 12) {
-                fieldLabel("VALUE ($)")
+                fieldLabel("VALUE (฿)")
                 moneyField
             }
 
@@ -243,7 +243,7 @@ struct EditItemView: View {
 
     private var moneyField: some View {
         HStack(spacing: 10) {
-            Text("$")
+            Text("฿")
                 .font(.system(size: 34, weight: .bold, design: .rounded))
                 .foregroundStyle(Color.secondary.opacity(0.38))
 

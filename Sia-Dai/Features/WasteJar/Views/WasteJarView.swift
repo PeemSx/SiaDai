@@ -81,7 +81,7 @@ struct WasteJarView: View {
                 .foregroundStyle(.secondary.opacity(0.6))
                 .tracking(1.2)
 
-            Text(String(format: "$%.2f", totalLostThisMonth))
+            Text(String(format: "฿%.2f", totalLostThisMonth))
                 .font(.system(size: 72, weight: .bold))
                 .foregroundStyle(.black)
 
@@ -157,19 +157,19 @@ struct WasteJarView: View {
     }
 
     private var earthImpactCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        let impact = getRelatableImpact(for: totalLostThisMonth)
+
+        return VStack(alignment: .leading, spacing: 16) {
             Text("EARTH IMPACT")
                 .font(.system(size: 15, weight: .bold, design: .rounded))
                 .foregroundStyle(Color.brandGreen)
                 .tracking(1.2)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Your waste this month generated enough CO2 to fill ")
-                    .foregroundStyle(.black.opacity(0.6)) +
-                Text("42 weather balloons.")
+                Text(impact.boldText.prefix(1).uppercased() + impact.boldText.dropFirst())
                     .foregroundStyle(.black)
                     .fontWeight(.bold) +
-                Text(" Think before you buy next time.")
+                Text(impact.normalTail)
                     .foregroundStyle(.black.opacity(0.6))
             }
             .font(.system(size: 18, design: .rounded))
@@ -181,7 +181,7 @@ struct WasteJarView: View {
             ZStack(alignment: .bottomTrailing) {
                 Color.white
                 
-                Image(systemName: "leaf.fill")
+                Image(systemName: impact.icon)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 120)
@@ -192,6 +192,24 @@ struct WasteJarView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
         .shadow(color: .cardShadow, radius: 20, x: 0, y: 12)
+    }
+
+    private func getRelatableImpact(for amount: Double) -> (boldText: String, normalTail: String, icon: String) {
+        if amount <= 0 {
+            return ("haven't wasted anything!", " You're doing amazing! You saved the planet and 100% of your money.", "star.fill")
+        } else if amount < 100 {
+            return ("a cup of bubble tea or a sweet snack", " that you love to enjoy. Try planning your meals better next week!", "cup.and.saucer.fill")
+        } else if amount < 500 {
+            let times = Int(amount / 219)
+            let timesText = times <= 1 ? "once" : "\(times) times"
+            return ("eat Shabu Teenoi \(timesText)!", " instead of tossing food into the trash. What a waste!", "fork.knife")
+        } else if amount < 5000 {
+            return ("host a Moo Kra Tha party for your entire squad", " easily. This money could have brought so much more joy to your life.", "person.3.sequence.fill")
+        } else if amount < 30000 {
+            return ("a brand new pair of AirPods Pro", " for free. Maybe check your fridge a bit more thoroughly next time.", "airpodsmax")
+        } else {
+            return ("buy a brand new iPhone", " right now! The value of your wasted food has accumulated into something huge.", "iphone")
+        }
     }
 }
 
