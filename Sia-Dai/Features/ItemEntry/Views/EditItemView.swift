@@ -49,17 +49,20 @@ struct EditItemView: View {
         Double(amountText.replacingOccurrences(of: ",", with: ".")) != nil
     }
 
+    // MARK: - Main UI Layout
     var body: some View {
         NavigationStack {
             ZStack {
+                // แปะสีกราวด์พื้นหลังแอปเต็มจอ
                 Color.screenBackground
                     .ignoresSafeArea()
 
+                // ฟอร์มเลื่อนขึ้นลงได้
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
-                        heroSection
-                        formSection
-                        deleteSection
+                        heroSection   // โซนรูปวัตถุดิบ + ปุ่มเปลี่ยนรูปด้านบน
+                        formSection   // โซนช่องกรอกข้อมูลแก้ไขวัตถุดิบ
+                        deleteSection // โซนปุ่มลบวัตถุดิบทิ้งแยกไว้ด้านล่างสุด
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
@@ -80,7 +83,6 @@ struct EditItemView: View {
             Button("Delete", role: .destructive) {
                 deleteItem()
             }
-
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will permanently remove \(item.name) from your inventory.")
@@ -90,11 +92,14 @@ struct EditItemView: View {
         }
     }
 
+    // MARK: - Hero Header Section (แสดงรูปเก่า + ปุ่มเลือกรูปใหม่)
     private var heroSection: some View {
         GeometryReader { proxy in
             ZStack(alignment: .topTrailing) {
+                // เช็คดึงรูปเก่ามาโชว์ ถ้าไม่มีโชว์พื้นหลังใบไม้
                 heroImage(size: proxy.size)
 
+                // เลเยอร์เงาดำจางๆ บังขอบบนล่าง
                 LinearGradient(
                     colors: [
                         Color.white.opacity(0.95),
@@ -106,6 +111,7 @@ struct EditItemView: View {
                 )
                 .frame(width: proxy.size.width, height: proxy.size.height)
 
+                // ปุ่ม PhotosPicker กดเปลี่ยนรูปภาพ ลอยอยู่มุมขวาบนของการ์ด
                 PhotosPicker(
                     selection: $selectedPhotoItem,
                     matching: .images
@@ -129,8 +135,10 @@ struct EditItemView: View {
         .shadow(color: Color.black.opacity(0.12), radius: 18, x: 0, y: 10)
     }
 
+    // MARK: - Form Inputs Section (โซนกล่องพิมพ์ข้อมูล)
     private var formSection: some View {
         VStack(alignment: .leading, spacing: 24) {
+            // ส่วนหัวฟอร์ม + ช่องแก้ไขชื่อวัตถุดิบ
             VStack(alignment: .leading, spacing: 8) {
                 Text("SiaDai")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
@@ -140,23 +148,27 @@ struct EditItemView: View {
                     .font(.system(size: 30, weight: .bold, design: .rounded))
                     .foregroundStyle(.black)
 
-                nameField
+                nameField // ช่องพิมพ์ชื่อ
             }
 
+            // ช่องกรอกราคา มีเครื่องหมาย ฿
             VStack(alignment: .leading, spacing: 12) {
                 fieldLabel("VALUE (฿)")
                 moneyField
             }
 
+            // ช่องใส่ปริมาณ + กดเลือกหน่วยวัดแบบ Dropdown
             VStack(alignment: .leading, spacing: 12) {
                 fieldLabel("AMOUNT")
                 amountRow
             }
 
+            // โซนเลือกวันหมดอายุ (ปุ่มลัด 3 วัน, 5 วัน, 1 สัปดาห์, ปฏิทินเอง)
             VStack(alignment: .leading, spacing: 14) {
                 fieldLabel("EXPIRES IN:")
                 expiryRow
 
+                // ถ้ากดเลือก Custom ให้กางปฏิทินออกมาให้จิ้มเลือกวันเอง
                 if isCustomExpiry {
                     DatePicker(
                         "Custom Expiry Date",
@@ -170,12 +182,14 @@ struct EditItemView: View {
                 }
             }
 
+            // ข้อความแจ้งเตือนสีแดงเวลากรอกข้อมูลเพี้ยน
             if let saveFeedbackMessage {
                 Text(saveFeedbackMessage)
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(Color.statusCrimson)
             }
 
+            // ปุ่มกดบันทึกความเปลี่ยนแปลง (ล็อกปุ่มไว้ถ้า Validation ไม่ผ่าน)
             Button {
                 saveItem()
             } label: {
@@ -200,10 +214,12 @@ struct EditItemView: View {
         }
     }
 
+    // MARK: - Delete Section (โซนปุ่มลบแยกเดี่ยวๆ ด้านล่างสุด)
     private var deleteSection: some View {
         VStack(spacing: 16) {
             Divider()
 
+            // ปุ่มกดลบวัตถุดิบ (คลิกแล้วจะไปเปิดตัวแปรเด้ง Alert ยืนยัน)
             Button(role: .destructive) {
                 showsDeleteConfirmation = true
             } label: {
@@ -229,6 +245,9 @@ struct EditItemView: View {
         .padding(.bottom, 12)
     }
 
+    // MARK: - Input Fields Subviews (ดีไซน์ย่อยของแต่ละช่องกรอก)
+
+    // ช่องกรอกแก้ไขชื่อสินค้า
     private var nameField: some View {
         HStack(spacing: 10) {
             TextField("Item Name", text: $nameText)
@@ -241,6 +260,7 @@ struct EditItemView: View {
         .background(Color(red: 0.95, green: 0.95, blue: 0.95), in: RoundedRectangle(cornerRadius: 30, style: .continuous))
     }
 
+    // ช่องราคาสินค้า มีสัญลักษณ์ ฿ นำหน้า
     private var moneyField: some View {
         HStack(spacing: 10) {
             Text("฿")
@@ -258,6 +278,7 @@ struct EditItemView: View {
         .background(Color(red: 0.95, green: 0.95, blue: 0.95), in: RoundedRectangle(cornerRadius: 30, style: .continuous))
     }
 
+    // แถวป้อนตัวเลขปริมาณคู่กับปุ่มกดเมนูย่อยเลือกหน่วยวัด (Menu Dropdown)
     private var amountRow: some View {
         HStack(spacing: 14) {
             TextField("250", text: $amountText)
@@ -296,6 +317,7 @@ struct EditItemView: View {
         }
     }
 
+    // แถวเรียงปุ่มลัดวันหมดอายุ (3 ปุ่มพิลด่วน + 1 ปุ่มปฏิทินเอง)
     private var expiryRow: some View {
         HStack(spacing: 12) {
             ForEach(expiryOptions, id: \.self) { days in
@@ -304,6 +326,7 @@ struct EditItemView: View {
         }
     }
 
+    // รูปแบบการ์ดตัวเลือกวันหมดอายุย่อยๆ (เปลี่ยนเฉดสีพื้นหลัง/เส้นตามดีกรีความเร่งด่วนของวัน)
     private func expiryOption(days: Int) -> some View {
         let isSelected = selectedExpiryDays == days
         let palette = expiryPalette(for: days)
@@ -340,6 +363,7 @@ struct EditItemView: View {
         .buttonStyle(.plain)
     }
 
+    // ส่วนประมวลผลเช็คแสดงรูปภาพด้านบนสุด (แสดงรูปจริงในระบบ / โชว์กราเดียนต์ใบไม้เข้มๆ ตอนวัตถุดิบไม่มีรูปภาพ)
     @ViewBuilder
     private func heroImage(size: CGSize) -> some View {
         if let selectedImageData, let uiImage = UIImage(data: selectedImageData) {
@@ -386,6 +410,7 @@ struct EditItemView: View {
         }
     }
 
+    // ดีไซน์ป้ายกำกับฟิลด์ตัวหนาขนาดเล็กสีเทาจางๆ
     private func fieldLabel(_ title: String) -> some View {
         Text(title)
             .font(.system(size: 13, weight: .bold, design: .rounded))

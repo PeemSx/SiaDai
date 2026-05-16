@@ -12,8 +12,11 @@ struct WasteChartView: View {
         data.map { $0.amount }.max() ?? 0
     }
 
+    // MARK: - Main Chart Layout
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            
+            // ส่วนหัวการ์ด โชว์หัวข้อเรื่องคู่กับชุดปุ่มกดสลับเปลี่ยนเดือน
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("MONEY LOST")
@@ -34,6 +37,7 @@ struct WasteChartView: View {
                 }
             }
 
+            // พาร์ทวาดตัวกราฟแท่ง (Swift Charts)
             Chart {
                 ForEach(data) { item in
                     BarMark(
@@ -42,6 +46,7 @@ struct WasteChartView: View {
                     )
                     .foregroundStyle(Color(red: 0.35, green: 0.80, blue: 0.52))
                     .cornerRadius(6)
+                    // แปะตัวเลขยอดเงินบาทลอยไว้บนหัวแท่งกราฟ (ดักเช็คถ้าเป็น 0 ให้ปรับสีจางลง)
                     .annotation(position: .top, spacing: 5) {
                         Text(String(format: "฿%.2f", item.amount))
                             .font(.system(size: 11, weight: .bold))
@@ -50,13 +55,16 @@ struct WasteChartView: View {
                 }
             }
             .frame(height: 200)
+            // ล็อกสเกลแกน Y ให้เริ่มที่ 0 เสมอ เพื่อดักปัญหาแท่งกราฟลอยไปอยู่ตรงกลางตอนยอดรวมเป็น 0
             .chartYScale(domain: 0...max(maxValue * 1.2, 100))
+            // ตั้งค่าดีไซน์แกน X โชว์ชื่อข้อความสัปดาห์คู่กับเส้นกริดแนวตั้งจางๆ หลังบ้าน
             .chartXAxis {
                 AxisMarks { _ in
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 1)).foregroundStyle(.black.opacity(0.04))
                     AxisValueLabel().font(.system(size: 11, weight: .bold)).foregroundStyle(.black)
                 }
             }
+            // ตั้งค่าดีไซน์แกน Y ย้ายตัวเลขบอกสเกลเงินบาทไปไว้ฝั่งซ้ายมือสุดของกราฟ
             .chartYAxis {
                 AxisMarks(position: .leading) { value in
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 1)).foregroundStyle(.black.opacity(0.04))
@@ -70,11 +78,13 @@ struct WasteChartView: View {
                 }
             }
         }
+        // แต่งขอบPadding จัดมุมมนของการ์ด และเทเงาให้กล่องกราฟภาพรวมดูมีมิติ
         .padding(24)
         .background(Color.white, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
         .shadow(color: .cardShadow, radius: 16, x: 0, y: 10)
     }
 
+    // MARK: - Reusable Month Button (โครงสร้างปุ่มกดสลับเดือนดีไซน์วงกลมมนๆ)
     private func monthButton(
         systemName: String,
         action: @escaping () -> Void,

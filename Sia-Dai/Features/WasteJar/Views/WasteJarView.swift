@@ -37,8 +37,10 @@ struct WasteJarView: View {
         viewModel.summaryTitle
     }
 
+    // MARK: - Main UI Layout
     var body: some View {
         ZStack {
+            // แปะสีกราวด์พื้นหลังแอปเต็มจอ
             Color.screenBackground
                 .ignoresSafeArea()
 
@@ -47,13 +49,15 @@ struct WasteJarView: View {
                     .frame(height: 0)
                     .ignoresSafeArea(edges: .top)
 
+                // แถบบาร์โลโก้แบรนด์ด้านบนสุด
                 TopBrandBar()
 
+                // ส่วนสถิติภาพรวมเลื่อนขึ้นลงได้
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 32) {
-                        summaryHeader
-
-                        WasteChartView(
+                        summaryHeader       // ส่วนพาดหัวสรุปยอดเงินบิลรวมที่เสียไป
+                        
+                        WasteChartView(     // ส่วนบล็อกกล่องแสดงกราฟแท่งรายสัปดาห์
                             data: chartData,
                             monthTitle: selectedMonthTitle,
                             canGoForward: canGoForwardMonth,
@@ -61,11 +65,11 @@ struct WasteJarView: View {
                             onNextMonth: { viewModel.showNextMonth() }
                         )
 
-                        earthImpactCard
+                        earthImpactCard     // การ์ดเปรียบเทียบสิ่งของแทงใจกระตุ้นความเสียดาย
 
-                        trashedItemsSection
-
+                        trashedItemsSection // เซกชันลิสต์รายการของกินที่กลายเป็นขยะแล้ว
                     }
+                    // เว้นระยะขอบ Padding (ด้านล่างเว้นระยะหนาหน่อยเอาไว้หลบแถบ Tab Bar)
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
                     .padding(.bottom, 160)
@@ -74,6 +78,7 @@ struct WasteJarView: View {
         }
     }
 
+    // MARK: - Summary Header UI (ส่วนหัวพาดข่าวยอดบิลรวมประจำเดือน)
     private var summaryHeader: some View {
         VStack(spacing: 8) {
             Text(summaryTitle)
@@ -81,10 +86,12 @@ struct WasteJarView: View {
                 .foregroundStyle(.secondary.opacity(0.6))
                 .tracking(1.2)
 
+            // ยอดเงินบาทขนาดใหญ่พาดกลางจอชัดๆ
             Text(String(format: "฿%.2f", totalLostThisMonth))
                 .font(.system(size: 72, weight: .bold))
                 .foregroundStyle(.black)
 
+            // แท็กแคปซูลเม็ดเล็กด้านล่าง บอกสถิติแนวโน้มว่าทิ้งขยะดีขึ้นหรือแย่ลงกว่าเดิม
             HStack(spacing: 6) {
                 Circle()
                     .fill(trendColor)
@@ -100,6 +107,7 @@ struct WasteJarView: View {
         }
     }
 
+    // MARK: - Trashed Items UI (ส่วนตารางรายชื่อวัตถุดิบที่โยนทิ้งลงถัง)
     private var trashedItemsSection: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
@@ -110,10 +118,12 @@ struct WasteJarView: View {
 
             VStack(spacing: 16) {
                 if trashedItems.isEmpty {
+                    // เคสถังขยะว่างเปล่า: แสดงข้อความบอกสภาวะโล่งสีเทาๆ
                     Text("No waste items logged yet.")
                         .foregroundStyle(.secondary)
                         .padding()
                 } else {
+                    // เคสมีข้อมูลอาหารขยะ: วนลูปสาดวาดแถวลิสต์รายการออกมาทีละแถว
                     ForEach(trashedItems, id: \.id) { item in
                         trashedRow(for: item)
                     }
@@ -122,18 +132,21 @@ struct WasteJarView: View {
         }
     }
 
+    // รูปแบบดีไซน์แถวเดี่ยวของรายการอาหารขยะย่อยๆ
     private func trashedRow(for item: FoodItem) -> some View {
         return HStack(spacing: 16) {
+            // ทำกล่องสี่เหลี่ยมมนมน แปะไอคอนใบไม้สีเทาจางๆ ไว้ด้านหน้าสุด
             ZStack {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(Color.black.opacity(0.03))
                     .frame(width: 64, height: 64)
                 
-                Image(systemName: "leaf.fill") 
+                Image(systemName: "leaf.fill")
                     .font(.title2)
                     .foregroundStyle(.black.opacity(0.7))
             }
 
+            // แสดงชื่อวัตถุดิบคู่กับรายละเอียดปริมาณและยอดบิลเสียหายข้างใต้
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.name)
                     .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -146,6 +159,7 @@ struct WasteJarView: View {
 
             Spacer()
 
+            // ไอคอนลูกศรชี้ขวา (Chevron) จางๆ ปิดท้ายแถวบ่งบอกว่ากดคลิกเปิดดูได้
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(.secondary.opacity(0.5))
@@ -156,6 +170,7 @@ struct WasteJarView: View {
         .shadow(color: .cardShadow, radius: 12, x: 0, y: 8)
     }
 
+    // MARK: - Earth Impact UI (การ์ดแสดงผลเปรียบเทียบมูลค่าความเสียดายแบบแทงใจ)
     private var earthImpactCard: some View {
         let impact = getRelatableImpact(for: totalLostThisMonth)
 
@@ -165,6 +180,7 @@ struct WasteJarView: View {
                 .foregroundStyle(Color.brandGreen)
                 .tracking(1.2)
 
+            // จัด Text บวกประกบสายอักษร (เอาส่วนข้อความหนาพิเศษ มาต่อพ่วงสาดรวมกับข้อความปกติ)
             VStack(alignment: .leading, spacing: 8) {
                 Text(impact.boldText.prefix(1).uppercased() + impact.boldText.dropFirst())
                     .foregroundStyle(.black)
@@ -181,6 +197,7 @@ struct WasteJarView: View {
             ZStack(alignment: .bottomTrailing) {
                 Color.white
                 
+                // ลายน้ำรูปไอคอนระบบจางๆ หมุนเยื้องอยู่ตรงมุมล่างขวาของการ์ดเพิ่มลูกเล่นความสวยงาม
                 Image(systemName: impact.icon)
                     .resizable()
                     .scaledToFit()

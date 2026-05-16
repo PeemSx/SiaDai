@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct RescueRecipeDetailView: View {
     @Environment(\.dismiss) private var dismiss
@@ -11,29 +12,33 @@ struct RescueRecipeDetailView: View {
     @State private var alertMessage = ""
     @State private var showsAlert = false
 
+    // กำหนดโครงสร้างตาราง Grid เป็นแบบ 2 คอลัมน์ที่ยืดหยุ่นได้
     private let ingredientColumns = [
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16)
     ]
 
+    // MARK: - Main UI Layout
     var body: some View {
         ZStack {
+            // แปะสีกราวด์พื้นหลังแอปเต็มจอ
             Color.screenBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                headerBar
+                headerBar // แถบ Custom Navigation Bar ด้านบนสุด
 
+                // ส่วนเนื้อหาทริปทั้งหมดแบบเลื่อนขึ้นลงได้
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 28) {
-                        heroSection
-                        summarySection
-                        trackedIngredientsSection
-                        otherIngredientsSection
-                        instructionsSection
-                        markAsMadeSection
+                        heroSection               // ส่วนภาพปกเมนูชิ้นใหญ่ + ตัวเลขสรุปเวลา cook
+                        summarySection            // ส่วนรายละเอียดคำอธิบายเมนู + Storage Tip
+                        trackedIngredientsSection // โซนกริดแสดงวัตถุดิบที่เราตามสต็อกอยู่
+                        otherIngredientsSection   // โซนแสดงวัตถุดิบเสริมอื่นๆ ที่ต้องใช้ร่วมกัน
+                        instructionsSection       // โซนแสดงวิธีทำทีละสเต็ป 1 2 3
+                        markAsMadeSection         // ปุ่มแอคชั่นใหญ่ด้านล่างสุดสำหรับกดทำเสร็จแล้ว
                     }
-                    .padding(.bottom, 140)
+                    .padding(.bottom, 140) // เว้นระยะขอบล่างสุดเผื่อหลบปุ่มลอยหรือแถบเมนู
                 }
             }
         }
@@ -45,8 +50,10 @@ struct RescueRecipeDetailView: View {
         }
     }
 
+    // MARK: - Header Bar UI (บาร์หัวข้อด้านบนสุด)
     private var headerBar: some View {
         HStack(spacing: 16) {
+            // ปุ่มย้อนกลับดีไซน์วงกลมสีขาวมนๆ
             Button {
                 dismiss()
             } label: {
@@ -68,6 +75,7 @@ struct RescueRecipeDetailView: View {
         .padding(.top, 18)
         .padding(.bottom, 18)
         .background(Color.white)
+        // ทำเส้นคั่นบางๆ แนบไว้ใต้บาร์หัวข้อ
         .overlay(alignment: .bottom) {
             Rectangle()
                 .fill(Color.black.opacity(0.04))
@@ -75,12 +83,14 @@ struct RescueRecipeDetailView: View {
         }
     }
 
+    // MARK: - Hero Section (ภาพปกและข้อความหัวเรื่องพาดทับ)
     private var heroSection: some View {
         VStack(spacing: 0) {
             ZStack(alignment: .bottomLeading) {
-                RecipeArtworkView(recipe: recipe, sourceItems: sourceItems)
+                RecipeArtworkView(recipe: recipe, sourceItems: sourceItems) // ภาพพรีวิวปกเมนูอาหาร
                     .frame(height: 318)
 
+                // แผ่นเลเยอร์ไล่เฉดดำจางๆ บังขอบล่างเพื่อให้ฟอนต์สีขาวอ่านง่ายขึ้นมาก
                 LinearGradient(
                     colors: [
                         .clear,
@@ -91,6 +101,7 @@ struct RescueRecipeDetailView: View {
                     endPoint: .bottom
                 )
 
+                // ชื่อเมนูและรายละเอียดคำโปรย มัดรวมกันวางซ้อนอยู่มุมล่างซ้ายของรูปปก
                 VStack(alignment: .leading, spacing: 8) {
                     Text(recipe.title)
                         .font(.system(size: 34, weight: .black, design: .rounded))
@@ -106,6 +117,7 @@ struct RescueRecipeDetailView: View {
             }
             .frame(height: 318)
 
+            // แถบเม็ดแคปซูลสรุปตัวเลข (Prep, Cook, Servings) ดันเยื้องลอยขึ้นมาทับบนรูปภาพเพิ่มความสวยงาม
             statsPill
                 .padding(.horizontal, 20)
                 .offset(y: -24)
@@ -113,13 +125,14 @@ struct RescueRecipeDetailView: View {
         }
     }
 
+    // แถบรวมข้อมูลตัวเลขย่อยภายในเม็ดแคปซูล
     private var statsPill: some View {
         HStack(spacing: 0) {
             statBlock(title: "PREP", value: "\(recipe.prepMinutes)m")
-            statDivider
+            statDivider // เส้นคั่นแนวตั้ง
             statBlock(title: "COOK", value: "\(recipe.cookMinutes)m")
             statDivider
-            statBlock(title: "DIFFICULTY", value: recipe.difficulty, highlight: true)
+            statBlock(title: "DIFFICULTY", value: recipe.difficulty, highlight: true) // ไฮไลต์สีกรีนแบรนด์ตรงระดับความยาก
             statDivider
             statBlock(title: "SERVINGS", value: "\(recipe.servings)")
         }
@@ -144,12 +157,14 @@ struct RescueRecipeDetailView: View {
         .padding(.horizontal, 10)
     }
 
+    // ดีไซน์เส้นคั่นแนวตั้งสีจางๆ ระหว่างช่องตัวเลขสรุป
     private var statDivider: some View {
         Rectangle()
             .fill(Color.black.opacity(0.07))
             .frame(width: 1, height: 42)
     }
 
+    // MARK: - Summary Section (คำอธิบายและกล่อง Storage Tip)
     private var summarySection: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text(recipe.summary)
@@ -157,6 +172,7 @@ struct RescueRecipeDetailView: View {
                 .foregroundStyle(.black.opacity(0.76))
                 .lineSpacing(5)
 
+            // ดีไซน์กล่องทิปส์แนะนำการเก็บรักษา (สไตล์รูปการ์ดสีขาวโปร่งแสงดูสะอาดตา)
             VStack(alignment: .leading, spacing: 12) {
                 Text("STORAGE TIP")
                     .font(.system(size: 13, weight: .black, design: .rounded))
@@ -174,6 +190,7 @@ struct RescueRecipeDetailView: View {
         .padding(.horizontal, 24)
     }
 
+    // MARK: - Tracked Ingredients UI (เซกชันตารางของกินที่เราตามสต็อก)
     private var trackedIngredientsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -184,6 +201,7 @@ struct RescueRecipeDetailView: View {
 
                 Spacer()
 
+                // ป้ายแคปซูลสีเขียวตัวหนาขนาดเล็ก แปะหัวตารางบอกว่าแมตช์เจอของในคลังอาหาร
                 Text("Inventory Match")
                     .font(.system(size: 10, weight: .black, design: .rounded))
                     .tracking(0.8)
@@ -193,6 +211,7 @@ struct RescueRecipeDetailView: View {
                     .background(Color.brandGreen.opacity(0.10), in: Capsule())
             }
 
+            // กางตาราง Grid 2 คอลัมน์เพื่อจัดวางการ์ดวัตถุดิบย่อยแต่ละชิ้น
             LazyVGrid(columns: ingredientColumns, spacing: 16) {
                 ForEach(recipe.matchedIngredients) { usage in
                     trackedIngredientCard(for: usage)
@@ -202,12 +221,14 @@ struct RescueRecipeDetailView: View {
         .padding(.horizontal, 24)
     }
 
+    // รูปแบบดีไซน์การ์ดวัตถุดิบย่อยภายในตารางกริด
     private func trackedIngredientCard(for usage: RecipeIngredientUsage) -> some View {
         let item = sourceItems.first(where: { $0.id == usage.foodItemID })
         let urgencyColor = urgencyColor(for: item)
         let systemSymbol = symbolName(for: usage.itemName)
 
         return VStack(alignment: .center, spacing: 12) {
+            // ทำวงกลมสีจางๆ ตามระดับดีกรีความด่วน ด้านในสาดไอคอน SF Symbol ลายอาหาร
             ZStack {
                 Circle()
                     .fill(urgencyColor.opacity(0.12))
@@ -237,6 +258,7 @@ struct RescueRecipeDetailView: View {
                 }
             }
 
+            // แสดงแท็กแจ้งเตือนวันหมดอายุสีส้ม/แดง/เขียวใต้การ์ด
             if let item {
                 Text(item.expiryDate.watchlistStatusHeadline())
                     .font(.system(size: 10, weight: .black, design: .rounded))
@@ -251,6 +273,7 @@ struct RescueRecipeDetailView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 18)
         .background(Color.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        // แปะแถบสีแนวตั้งหนาๆ ด้านข้างซ้ายสุดของการ์ด เพื่อช่วยให้สแกนสายตาดูกลุ่มสีเร่งด่วนง่ายขึ้นเยอะ
         .overlay(alignment: .leading) {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(urgencyColor)
@@ -260,6 +283,7 @@ struct RescueRecipeDetailView: View {
         .shadow(color: .cardShadow, radius: 12, x: 0, y: 8)
     }
 
+    // MARK: - Other Ingredients UI (โซนลิสต์ของกินเสริมอื่นๆ)
     private var otherIngredientsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("OTHER INGREDIENTS")
@@ -267,6 +291,7 @@ struct RescueRecipeDetailView: View {
                 .tracking(1.7)
                 .foregroundStyle(.secondary.opacity(0.72))
 
+            // วาดรายการวัตถุดิบเสริม มัดรวมอยู่ในการ์ดสีขาวหลังบ้านมีสัญลักษณ์จุด Bullet Point สีเขียวแบรนด์นำหน้า
             VStack(alignment: .leading, spacing: 14) {
                 ForEach(recipe.otherIngredients, id: \.self) { ingredient in
                     HStack(spacing: 12) {
@@ -287,6 +312,7 @@ struct RescueRecipeDetailView: View {
         .padding(.horizontal, 24)
     }
 
+    // MARK: - Instructions UI (โซนแสดงขั้นตอนการทำอาหาร)
     private var instructionsSection: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text("STEP-BY-STEP INSTRUCTIONS")
@@ -294,6 +320,7 @@ struct RescueRecipeDetailView: View {
                 .tracking(1.7)
                 .foregroundStyle(.secondary.opacity(0.72))
 
+            // วนลูปวาดลำดับวิธีทำ (จัดฟอร์แมตโชว์เลขลำดับสองหลักเก๋ๆ เช่น 01, 02 คู่กับข้อความคำอธิบาย)
             VStack(alignment: .leading, spacing: 20) {
                 ForEach(Array(recipe.steps.enumerated()), id: \.offset) { index, step in
                     HStack(alignment: .top, spacing: 18) {
@@ -314,6 +341,7 @@ struct RescueRecipeDetailView: View {
         .padding(.horizontal, 24)
     }
 
+    // MARK: - Mark As Made UI (โซนปุ่มกดบันทึกสำเร็จด้านล่างสุด)
     private var markAsMadeSection: some View {
         VStack(spacing: 12) {
             Button {
@@ -323,6 +351,7 @@ struct RescueRecipeDetailView: View {
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
                         .fill(Color.brandGreen)
 
+                    // ทริคสลับ UI: ถ้าหลังบ้านกำลังหักข้อมูลคลังอาหารอยู่ จะสลับมาเปิดโหลดหมุนๆ (ProgressView) แทนตัวหนังสือทันที
                     if isApplyingRecipe {
                         ProgressView()
                             .tint(.white)
@@ -336,7 +365,7 @@ struct RescueRecipeDetailView: View {
                 .frame(height: 72)
             }
             .buttonStyle(.plain)
-            .disabled(isApplyingRecipe)
+            .disabled(isApplyingRecipe) // ล็อกปุ่มป้องกันผู้ใช้กดซ้ำซ้อนขณะประมวลผล
 
             Text("Watchlist amounts update automatically after the recipe is marked as made.")
                 .font(.system(size: 13, weight: .medium, design: .rounded))

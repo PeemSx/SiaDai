@@ -33,19 +33,26 @@ struct HomeView: View {
         viewModel.preventableLoss(from: foodItems)
     }
 
+    // MARK: - Main UI Layout
     var body: some View {
         ZStack {
+            // แปะสีกราวด์แอปให้เต็มจอ
             Color.screenBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
+                // แถบบาร์โลโก้แบรนด์ด้านบนสุด
                 TopBrandBar()
 
+                // หน้าจอหลักแบบเลื่อนขึ้นลงได้ (ซ่อนแถบสกรอล)
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 28) {
+                        // โชว์ยอดเงินรวมที่ช่วยประหยัดได้
                         headerSection
 
+                        // เช็คว่าตู้เย็นมีของใกล้เน่าหรือยัง
                         if let priorityItem {
+                            // เคสมีของวิกฤต: โชว์ปุ่มเคลียร์ด่วน
                             QuickActionView(
                                 item: priorityItem,
                                 viewModel: viewModel,
@@ -57,6 +64,7 @@ struct HomeView: View {
                                 }
                             )
 
+                            // การ์ดแนะนำสูตรอาหารกู้ชีพจากของที่เหลืออยู่
                             RescueRecipesSectionView(
                                 recipes: recipesViewModel.recipes,
                                 sourceItems: trackingItems,
@@ -85,20 +93,24 @@ struct HomeView: View {
                                 }
                             )
                         } else {
+                            // เคสตู้เย็นเคลียร์ ไม่มีของใกล้เสีย: โชว์หน้าโล่งๆ แนะนำให้เพิ่มของเข้าคลัง
                             emptyState
                         }
                     }
+                    // จัดระยะขอบรอบๆ (ขอบล่างเผื่อพื้นที่เยอะหน่อยเอาไว้หลบแถบ Tab Bar ด้านล่างสุด)
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
                     .padding(.bottom, 180)
                 }
             }
         }
+        // ดักจับความเปลี่ยนแปลงของคลังอาหาร ถ้าข้อมูลเปลี่ยนปุ๊บ สั่งซิงค์ UI ทันที
         .task(id: recipeTaskID) {
             recipesViewModel.syncInventory(trackingItems)
         }
     }
 
+    // MARK: - Header UI
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("PRIORITIES")
@@ -116,6 +128,7 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Empty State UI
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Your quick actions are clear.")

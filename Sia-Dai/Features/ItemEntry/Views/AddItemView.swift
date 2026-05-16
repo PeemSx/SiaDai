@@ -14,7 +14,7 @@ struct AddItemView: View {
     @State private var selectedExpiryDays: Int = 5
     @State private var isCustomExpiry: Bool = false
     @State private var expiryDate: Date = Calendar.current.date(byAdding: .day, value: 5, to: .now) ?? .now
-    @State private var selectedPhotoItem: PhotosPickerItem? 
+    @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedImageData: Data?
     @State private var classificationResult: IngredientClassification?
     @State private var classificationMessage: String?
@@ -30,19 +30,24 @@ struct AddItemView: View {
         Double(amountText.replacingOccurrences(of: ",", with: ".")) != nil
     }
 
+    // MARK: - Main UI Layout
     var body: some View {
         ZStack {
+            // สีกราวด์พื้นหลังแอปเต็มจอ
             Color.screenBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
+                // แถบบาร์โลโก้ด้านบนสุด
                 TopBrandBar()
 
+                // ส่วนฟอร์มหลักแบบเลื่อนขึ้นลงได้
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 24) {
-                        heroSection
-                        formSection
+                    VStack(spacing: 24) {
+                        heroSection // ส่วนโชว์รูปและปุ่มกล้องด้านบน
+                        formSection // ส่วนกรอกข้อมูลวัตถุดิบด้านล่าง
                     }
+                    // ดันระยะขอบรอบๆ (ขอบล่างเผื่อระยะหลบ Tab Bar)
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
                     .padding(.bottom, 180)
@@ -54,11 +59,14 @@ struct AddItemView: View {
         }
     }
 
+    // MARK: - Hero Header Section (รูปพรีวิว + ปุ่มเลือกรูป)
     private var heroSection: some View {
         GeometryReader { proxy in
             ZStack(alignment: .topTrailing) {
+                // ดึงรูปที่เลือกมาโชว์ (ถ้าไม่มีจะโชว์กราเดียนต์ใบไม้แทน)
                 heroImage(size: proxy.size)
 
+                // เลเยอร์เงาดำจางๆ บังขอบบน-ล่างให้เห็นปุ่มชัดขึ้น
                 LinearGradient(
                     colors: [
                         Color.white.opacity(0.95),
@@ -70,6 +78,7 @@ struct AddItemView: View {
                 )
                 .frame(width: proxy.size.width, height: proxy.size.height)
 
+                // ปุ่ม PhotosPicker กดเปิดอัลบั้มภาพเครื่องลอยอยู่มุมขวาบน
                 PhotosPicker(
                     selection: $selectedPhotoItem,
                     matching: .images
@@ -93,8 +102,10 @@ struct AddItemView: View {
         .shadow(color: Color.black.opacity(0.12), radius: 18, x: 0, y: 10)
     }
 
+    // MARK: - Form Inputs Section (กล่องกรอกข้อมูลทั้งหมด)
     private var formSection: some View {
         VStack(alignment: .leading, spacing: 24) {
+            // ส่วนหัวฟอร์ม + ช่องกรอกชื่อวัตถุดิบ
             VStack(alignment: .leading, spacing: 8) {
                 Text("SiaDai")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
@@ -104,27 +115,32 @@ struct AddItemView: View {
                     .font(.system(size: 30, weight: .bold, design: .rounded))
                     .foregroundStyle(.black)
 
-                nameField
+                nameField // ช่องพิมพ์ชื่อวัตถุดิบหลัก
 
+                // ดักเช็คสถานะโหลดรูปหรือวิเคราะห์รูปจาก AI -> โชว์ชิปแจ้งสถานะ/ตัวเลือกแนะนำ
                 if isClassifyingPhoto || classificationResult != nil || classificationMessage != nil {
                     classificationStatusView
                 }
             }
 
+            // ช่องกรอกราคาสินค้า (บาท)
             VStack(alignment: .leading, spacing: 12) {
                 fieldLabel("VALUE (฿)")
                 moneyField
             }
 
+            // ช่องกรอกปริมาณ + เมนูกดเลือกหน่วยวัด (g, kg, ชิ้น ฯลฯ)
             VStack(alignment: .leading, spacing: 12) {
                 fieldLabel("AMOUNT")
                 amountRow
             }
 
+            // โซนเลือกวันหมดอายุ (ปุ่มลัด 3 วัน, 5 วัน, 1 สัปดาห์, Custom)
             VStack(alignment: .leading, spacing: 14) {
                 fieldLabel("EXPIRES IN:")
                 expiryRow
                 
+                // ถ้าผู้ใช้กดเลือกแบบกำหนดเอง (Custom) -> คลี่ตัวเลือกปฏิทินกราฟิกออกมา
                 if isCustomExpiry {
                     DatePicker(
                         "Custom Expiry Date",
@@ -139,12 +155,14 @@ struct AddItemView: View {
                 }
             }
 
+            // ตัวหนังสือแจ้งเตือนเอเรอร์เวลากรอกข้อมูลไม่ครบ (Validation)
             if let saveFeedbackMessage {
                 Text(saveFeedbackMessage)
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(showsSuccessFeedback ? Color.brandGreen : Color.statusCrimson)
             }
 
+            // ปุ่มกดเซฟลงคลัง (ห้ามกดถ้า Validation ดักแล้วไม่ผ่าน)
             Button {
                 saveItem()
             } label: {
@@ -170,6 +188,9 @@ struct AddItemView: View {
         .padding(.bottom, 28)
     }
 
+    // MARK: - Input Field Subviews (ดีไซน์ย่อยของแต่ละช่องกรอก)
+
+    // ช่องกรอกชื่อสินค้าชิ้นใหญ่
     private var nameField: some View {
         HStack(spacing: 10) {
             TextField("Item Name", text: $nameText)
@@ -182,6 +203,7 @@ struct AddItemView: View {
         .background(Color(red: 0.95, green: 0.95, blue: 0.95), in: RoundedRectangle(cornerRadius: 30, style: .continuous))
     }
 
+    // ช่องกรอกราคา มีสัญลักษณ์สัญลักษณ์เงิน ฿ นำหน้า
     private var moneyField: some View {
         HStack(spacing: 10) {
             Text("฿")
@@ -199,6 +221,7 @@ struct AddItemView: View {
         .background(Color(red: 0.95, green: 0.95, blue: 0.95), in: RoundedRectangle(cornerRadius: 30, style: .continuous))
     }
 
+    // แถวป้อนตัวเลขปริมาณคู่กับเมนูกดเลือกหน่วย (Menu Dropdown)
     private var amountRow: some View {
         HStack(spacing: 14) {
             TextField("250", text: $amountText)
@@ -237,6 +260,7 @@ struct AddItemView: View {
         }
     }
 
+    // แถวเรียงปุ่มลัดวันหมดอายุ (3 ตัวเลือกพิล + 1 ปุ่มปฏิทินเอง)
     private var expiryRow: some View {
         HStack(spacing: 12) {
             ForEach(expiryOptions, id: \.self) { days in
@@ -245,6 +269,7 @@ struct AddItemView: View {
         }
     }
 
+    // ดีไซน์การ์ดตัวเลือกวันหมดอายุย่อยๆ (สลับสีกราวด์/เส้นขอบตามกลุ่มความเร่งด่วน)
     private func expiryOption(days: Int) -> some View {
         let isSelected = selectedExpiryDays == days
         let palette = expiryPalette(for: days)
@@ -282,6 +307,7 @@ struct AddItemView: View {
         .buttonStyle(.plain)
     }
 
+    // ส่วนประมวลผลสลับรูปพื้นหลังด้านบนสุด (แสดงรูปจริง / โชว์ใบไม้ใบใหญ่ตอนไม่มีภาพ)
     @ViewBuilder
     private func heroImage(size: CGSize) -> some View {
         if let selectedImageData, let uiImage = UIImage(data: selectedImageData) {
@@ -328,15 +354,18 @@ struct AddItemView: View {
         }
     }
 
+    // MARK: - AI Image Classification UI (พาร์ทแสดงสถานะสแกนวัตถุดิบจากรูป)
     @ViewBuilder
     private var classificationStatusView: some View {
         if isClassifyingPhoto {
+            // สเตตัส 1: กำลังสแกนวิเคราะห์รูปภาพ
             classificationChip(
                 icon: "sparkles.rectangle.stack.fill",
                 message: "Analyzing the ingredient photo...",
                 tint: Color.secondary
             )
         } else if let classificationResult {
+            // สเตตัส 2: สแกนเสร็จแล้ว -> ลิสต์รายชื่อวัตถุดิบที่ AI แนะนำออกมาเป็นชุดปุ่มกด
             VStack(alignment: .leading, spacing: 12) {
                 classificationChip(
                     icon: "sparkles.rectangle.stack.fill",
@@ -351,6 +380,7 @@ struct AddItemView: View {
                 }
             }
         } else if let classificationMessage {
+            // สเตตัส 3: เกิดข้อผิดพลาด/สแกนไม่สำเร็จ -> โชว์กล่องเตือนสีส้ม
             classificationChip(
                 icon: "exclamationmark.triangle.fill",
                 message: classificationMessage,
@@ -359,6 +389,7 @@ struct AddItemView: View {
         }
     }
 
+    // ดีไซน์กล่องชิปข้อความแจ้งเตือนสถานะสแกนภาพย่อยๆ
     private func classificationChip(icon: String, message: String, tint: Color) -> some View {
         HStack(spacing: 10) {
             Image(systemName: icon)
@@ -374,6 +405,7 @@ struct AddItemView: View {
         .background(tint.opacity(0.10), in: Capsule())
     }
 
+    // แถวปุ่มรายชื่อวัตถุดิบที่ได้จาก AI (ไฮไลต์สีกรีนเข้มเมื่อชื่อตรงกับที่เลือก)
     private func predictionButton(for prediction: IngredientPrediction) -> some View {
         let isSelected =
             nameText
@@ -411,6 +443,7 @@ struct AddItemView: View {
         .buttonStyle(.plain)
     }
 
+    // ดีไซน์ตัวหนังสือป้ายกำกับฟิลด์ (หัวข้อจิ๋วๆ สีเทาจางๆ ตัวหนา)
     private func fieldLabel(_ title: String) -> some View {
         Text(title)
             .font(.system(size: 13, weight: .bold, design: .rounded))
